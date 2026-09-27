@@ -116,3 +116,13 @@ At the author's request, no further analyses, settings or reruns. The numbers fo
 `results/full/RESULTS.md` (main tables, seeds 0–4) and `results/full/extra/CHECKS.md` §1–8
 (supplementary analyses). Any later change must be recorded here with its reason and justified
 independently of the results above.
+
+## Post-hoc analyses added after the freeze (2026-09-28)
+
+Requested by the author after the freeze. Saved scores only: no retraining, no setting changed, the
+frozen results are unchanged. `tools/posthoc_after_freeze.py` → `results/full/extra/posthoc.json`,
+tables in `CHECKS.md` §9–10.
+1. Fuzzy-MUEBA: MUEBA's p_lstm and s_iforest ECDF-normalised on validation, fused by the same fuzzy
+   system (breakpoints chosen on validation PR-AUC from the same grid), tau_B for 10 alerts/day;
+   compared with MUEBA's AND rule. Caveat: MUEBA's validation scores are in-sample for its classifier.
+2. Calibration: share of malicious sessions per FLAITD risk level (VL/L/M/H/VH) on validation and test.

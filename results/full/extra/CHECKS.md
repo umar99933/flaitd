@@ -218,6 +218,60 @@ only 11.8. Validation thresholds: MUEBA min-score 0.591–0.605, FLAITD risk 0.8
 
 ---
 
+# Post-hoc analyses added after the freeze (2026-09-28)
+
+Requested by the author after the analysis freeze; `tools/posthoc_after_freeze.py` → `posthoc.json`.
+Saved scores only: no retraining, no setting changed. Mean ± std over seeds 0–4.
+
+## 9. Fuzzy-MUEBA: MUEBA's two parts fused by the FLAITD fuzzy system
+
+MUEBA's part scores (classifier probability p_LSTM, iForest score s_iForest) are ECDF-normalised on the
+validation period, fused by the same Mamdani system (breakpoints chosen on validation PR-AUC from the
+same grid), and alerted at τ_B for 10 alerts per day. Compared with MUEBA's own rule (both parts > 0.5).
+**Caveat:** MUEBA's classifier is fitted on days 1–210, so its validation scores are in-sample; the
+ECDF, the breakpoint choice and τ_B all rest on data the classifier was trained on. This is why
+Fuzzy-MUEBA raises fewer test alerts than intended (2,123 vs 2,910).
+
+| Method | PR-AUC | ROC-AUC | P@B | R@B | F1@B | Insiders (of 61) | Sc. 1 / 2 / 3 (of 25 / 30 / 6) | Benign users | Alerts |
+|---|---|---|---|---|---|---|---|---|---|
+| MUEBA, AND rule | — | — | 0.141 ± 0.011 | 0.517 ± 0.041 | 0.221 ± 0.014 | 47.6 ± 1.5 | 15.4 / 27.0 / 5.2 | 118 ± 19 | 3,053 ± 317 |
+| Fuzzy-MUEBA | 0.159 ± 0.012 | 0.933 ± 0.010 | 0.152 ± 0.007 | 0.390 ± 0.018 | 0.219 ± 0.010 | 48.8 ± 0.4 | 18.6 / 25.0 / 5.2 | 150 ± 12 | 2,123 ± 25 |
+| *Reference:* MUEBA classifier part alone | 0.280 ± 0.021 | 0.891 ± 0.028 | 0.103 ± 0.021 | 0.566 ± 0.046 | 0.173 ± 0.030 | 47.8 ± 1.5 | 15.4 / 27.0 / 5.4 | 128 ± 18 | 4,787 ± 1,151 |
+| *Reference:* FLAITD | 0.031 ± 0.002 | 0.890 ± 0.003 | 0.045 ± 0.004 | 0.144 ± 0.010 | 0.068 ± 0.005 | 46.0 ± 0.6 | 24.4 / 15.6 / 6.0 | 251 ± 4 | 2,650 ± 55 |
+
+Breakpoints chosen: m = 0.90, h = 0.99 in every seed; τ_B = 0.712–0.722.
+
+- Replacing MUEBA's AND rule by the fuzzy system leaves F1 at the budget unchanged (0.219 vs 0.221) and
+  gives a slightly higher precision (0.152 vs 0.141) and 1.2 more insiders found (48.8 vs 47.6, mostly
+  scenario 1: 18.6 vs 15.4), at lower session recall (0.390 vs 0.517) and with 30% fewer alerts.
+- Fuzzy fusion again ranks worse than the stronger part alone: PR-AUC 0.159 vs 0.280 for MUEBA's
+  classifier, the same pattern as FLAITD vs I-only (0.031 vs 0.042).
+
+## 10. Calibration of FLAITD's risk levels
+
+Share of malicious sessions per output level (the output term with the highest membership at r), each
+seed with its own breakpoints (m = 0.80, h = 0.99). Base rate: 0.65% (validation), 0.39% (test).
+
+| Level | Val sessions | Val malicious | Val share | Val lift | Test sessions | Test malicious | Test share | Test lift | Share of all test malicious |
+|---|---|---|---|---|---|---|---|---|---|
+| VL | 12,330 ± 44 | 2.0 ± 0.6 | 0.02% | 0.03× | 105,153 ± 402 | 4.0 ± 0.6 | 0.004% | 0.01× | 0.5% |
+| L | 5,665 ± 59 | 11.4 ± 1.5 | 0.20% | 0.3× | 46,645 ± 388 | 63.2 ± 4.5 | 0.14% | 0.35× | 7.6% |
+| M | 3,413 ± 43 | 45.6 ± 2.6 | 1.34% | 2.1× | 32,680 ± 227 | 220.6 ± 9.6 | 0.68% | 1.7× | 26.6% |
+| H | 2,501 ± 35 | 75.0 ± 2.5 | 3.00% | 4.6× | 24,738 ± 210 | 458.4 ± 9.2 | 1.85% | 4.7× | 55.3% |
+| VH | 153 ± 2 | 22.0 ± 1.1 | 14.4% | 22× | 1,335 ± 27 | 82.8 ± 3.7 | 6.20% | 16× | 10.0% |
+| all | 24,062 | 156 | 0.65% | 1× | 210,551 | 829 | 0.39% | 1× | 100% |
+
+- The levels are well ordered on both periods: the share of malicious sessions rises monotonically from
+  VL to VH, and the lift over the base rate is almost the same on validation and test for L, M and H.
+- They are not probabilities: even VH holds only 6.2% malicious sessions on test (14.4% on validation),
+  and the absolute shares fall from validation to test because the test base rate is lower.
+- VL (half of all sessions) contains 0.5% of the malicious test sessions; H and VH together contain
+  65% of them, in 12% of the sessions.
+- The VH level holds about 4.6 test sessions per day, H about 85 per day, so at B = 10/day the alerts
+  are the VH sessions plus the top of H.
+
+---
+
 ## What this means for the evaluation framing (facts only)
 
 1. Under a fixed analyst budget, a Mamdani fusion whose weaker consequents lie below the budget

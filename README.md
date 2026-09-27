@@ -75,7 +75,7 @@ flaitd/metrics.py       PR-AUC, budget metrics, user-level metrics, bootstrap
 flaitd/explain.py       case studies, TreeSHAP, deletion test
 flaitd/report.py        tables, CIs, figure
 tools/make_synthetic_cert.py   synthetic data in CERT format for testing
-tools/fusion_checks.py, mueba_no_keywords.py, extra_checks2.py, union_budget.py   supplementary analyses (CHECKS.md)
+tools/fusion_checks.py, mueba_no_keywords.py, extra_checks2.py, union_budget.py, posthoc_after_freeze.py   supplementary analyses (CHECKS.md)
 ```
 
 ## 6. License and citation
