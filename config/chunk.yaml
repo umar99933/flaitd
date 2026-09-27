@@ -1,0 +1,11 @@
+# Debug run on a chunk of CERT r4.2: every insider plus 200 random benign users, 2 seeds.
+# Numbers from this run are NOT paper results (base rate and peer groups differ from the full data).
+run_name: chunk
+cache_dir: cache/chunk
+results_dir: results/chunk
+users:
+  mode: sample
+  n_benign: 200
+seeds: [0, 1]
+individual:
+  max_epochs: 10

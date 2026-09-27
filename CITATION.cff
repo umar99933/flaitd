@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this code or its results, please cite it as below."
+title: "FLAITD: Interpretable Fuzzy Fusion of Individual and Peer-Group Behaviour Models for Insider Threat Detection"
+type: software
+authors:
+  - given-names: Umer
+    family-names: Farooq
+    affiliation: "Department of Cyber Security, Air University, Islamabad, Pakistan"
+  - given-names: "Ch Anwar"
+    family-names: "Ul Hassan"
+    affiliation: "Department of Creative Technologies, Air University, Islamabad, Pakistan"
+version: 1.0.0
+date-released: 2026-09-27
+license: MIT
+repository-code: "https://github.com/umar99933/flaitd"
+keywords:
+  - insider threat detection
+  - user and entity behaviour analytics
+  - fuzzy inference
+  - LSTM
+  - isolation forest
+  - CERT r4.2
+references:
+  - type: data
+    title: "Insider Threat Test Dataset"
+    authors:
+      - family-names: Lindauer
+        given-names: Brian
+    publisher:
+      name: "Carnegie Mellon University"
+    year: 2020
+    doi: 10.1184/R1/12841247.v1

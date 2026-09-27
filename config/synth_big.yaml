@@ -1,0 +1,12 @@
+base: synthetic.yaml
+run_name: synth_big
+data_dir: data/synth_big/r4.2
+answers_dir: data/synth_big/answers
+cache_dir: cache/synth_big
+results_dir: results/synth_big
+read_chunksize: 500000
+split: {train: [1, 100], val: [101, 125], test: [126, 200]}
+seeds: [0]
+group: {min_group_size: 10, n_trees: 100}
+mueba: {n_trees: 100, epochs: 5}
+individual: {max_epochs: 5, hidden: 64, attn_dim: 32}

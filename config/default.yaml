@@ -1,0 +1,122 @@
+# FLAITD experiment configuration (full CERT r4.2 run).
+# Paths are relative to the repository root unless absolute.
+
+run_name: full
+data_dir: data/r4.2            # folder containing logon.csv, device.csv, file.csv, email.csv, http.csv, LDAP/
+answers_dir: data/answers      # folder containing insiders.csv and r4.2-1/, r4.2-2/, r4.2-3/
+dataset_version: "4.2"
+org_domain: dtaa.com           # e-mail domain of the simulated organisation
+cache_dir: cache/full
+results_dir: results/full
+read_chunksize: 2000000        # rows per chunk when streaming the large CSV files
+
+# Which users to include. mode: all | sample
+#   sample keeps every insider (or n_insiders of them) plus n_benign random benign users.
+#   Use sample for debugging only: the base rate and peer groups differ from the full data.
+users:
+  mode: all
+  n_benign: 200
+  n_insiders: null             # null = keep all insiders
+  seed: 0
+
+sessions:
+  merge_unlocks: true          # a same-day repeat logon (no logoff between) is a screen unlock: CHANGES.md #1
+  workday_end_hour: 19         # orphan logon with no later event is closed at this hour (or 23:59:59 if later)
+  max_duration_hours: 24       # hard cap on any session
+  event_grace_minutes: 60      # an event up to this long after a session end is still assigned to it
+
+features:
+  offhours: [7, 19]            # a session starting before 07:00 or at/after 19:00 is off-hours
+  # Keyword lists for the three scenario-indicative (K) features. Write them from general knowledge,
+  # never from the answer key. Matched against the host and first path segment only (see
+  # ingest.keyword_hits): 'term' = substring of the host, '/term' = first path segment,
+  # 'host/term' = that host with that first path segment. Changed after the data audit: CHANGES.md #2.
+  keywords:
+    job: [monster.com, careerbuilder, indeed.com, simplyhired, jobhunt, /hotjobs, craigslist.org/jobs,
+          linkedin.com/jobs, glassdoor, dice.com, careers., /careers, /jobs, .jobs, job-search, jobsearch]
+    hacking: [hack, keylog, spy, exploit, crack, rootkit, phrack, 2600.com, malware, trojan]
+    leak: [wikileaks, dropbox, pastebin, mediafire, megaupload, rapidshare, 4shared, filesonic, sendspace]
+  # General-interest sites whose names merely contain a keyword (tips blog, image host, humour site).
+  keyword_exclude_hosts: [lifehacker.com, imageshack.us, cracked.com]
+  keyword_features: [n_job, n_hack, n_leak]
+
+split:
+  # Day numbers are counted from the first day present in logon.csv (day 1).
+  train: [1, 180]
+  val: [181, 210]
+  test: [211, 502]
+
+seeds: [0, 1, 2, 3, 4]
+
+individual:
+  window: 10
+  hidden: 64
+  attn_dim: 32
+  attention: true
+  lr: 0.001
+  batch_size: 256
+  max_epochs: 30
+  patience: 3
+  std_floor: 0.1               # per-user std is floored at std_floor * global std
+  min_std: 0.1                 # and never below this (model units, log1p for counts): CHANGES.md #4
+  clean_train: true            # drop known malicious sessions from the training targets
+  device: auto                 # auto | cpu | cuda
+  num_threads: 0               # 0 = torch default
+
+group:
+  min_group_size: 10           # role groups smaller than this fall back to functional unit + department
+  fallback: true
+  static_roles: false          # ablation: use each user's first-month role for the whole period
+  n_trees: 100
+  max_samples: 256
+  min_pool: 50                 # min training sessions for a group-month; otherwise earlier months are added
+  max_back_months: 3
+  tree_type: sklearn           # sklearn (standard iForest) | eif (extended, hyperplane splits)
+
+normalisation: ecdf            # ecdf | minmax (ablation)
+
+fuzzy:
+  low_top: 0.60                # Low = trapezoid(0, 0, low_top, medium_peak)
+  medium_peak: 0.85            # Medium = triangle(low_top, medium_peak, high_full)
+  high_full: 0.97              # High = trapezoid(medium_peak, high_full, 1, 1)
+  grid_points: 201
+  tune_breakpoints: true       # choose medium_peak/high_full on the validation period from the grids below
+  medium_peak_grid: [0.80, 0.85, 0.90]
+  high_full_grid: [0.95, 0.97, 0.99]
+  tune_metric: val_ap          # breakpoints maximising validation PR-AUC; falls back to defaults if the
+                               # validation period has fewer than stacking.min_val_positives malicious sessions
+
+budget:
+  alerts_per_day: 10
+
+stacking:
+  min_val_positives: 10        # below this, stacking is fitted with grouped 5-fold CV on the test users
+
+baselines:
+  fit_subsample: 20000
+  ocsvm_nu: 0.01
+  lof_k: 20
+  lstm_ae: true
+
+mueba:
+  enabled: true
+  window: 10
+  hidden: 64
+  attn_dim: 32
+  epochs: 20
+  batch_size: 256
+  n_trees: 100
+  max_samples: 256
+  n_candidates: 5              # candidate subsamples per tree; the one with most 3-sigma outliers is used
+  golden: 0.618                # split point = min + golden * (max - min) of the chosen attribute
+  threshold_lstm: 0.5
+  threshold_iforest: 0.5
+
+evaluation:
+  bootstrap: 1000
+
+ablations: [no_attention, static_roles, no_fallback, eif, minmax, no_clean, no_keywords]
+
+explain:
+  max_cases: 20
+  random_repeats: 10

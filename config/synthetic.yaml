@@ -1,0 +1,35 @@
+# Smoke test on the synthetic CERT-format data made by tools/make_synthetic_cert.py (not real results).
+run_name: synthetic
+data_dir: data/synthetic/r4.2
+answers_dir: data/synthetic/answers
+cache_dir: cache/synthetic
+results_dir: results/synthetic
+read_chunksize: 20000
+split:
+  train: [1, 60]
+  val: [61, 75]
+  test: [76, 120]
+seeds: [0, 1]
+budget:
+  alerts_per_day: 3
+group:
+  min_group_size: 4
+  n_trees: 30
+individual:
+  max_epochs: 4
+  hidden: 16
+  attn_dim: 8
+baselines:
+  fit_subsample: 3000
+mueba:
+  epochs: 3
+  hidden: 16
+  attn_dim: 8
+  n_trees: 20
+evaluation:
+  bootstrap: 100
+explain:
+  max_cases: 5
+  random_repeats: 3
+stacking:
+  min_val_positives: 3
