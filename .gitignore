@@ -21,3 +21,4 @@ results/full/extra/*
 
 # Local assistant instructions (not part of the published code)
 CLAUDE.md
+!results/full/extra/fig_budget_sweep.png

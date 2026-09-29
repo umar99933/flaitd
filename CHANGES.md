@@ -126,3 +126,8 @@ tables in `CHECKS.md` §9–10.
    system (breakpoints chosen on validation PR-AUC from the same grid), tau_B for 10 alerts/day;
    compared with MUEBA's AND rule. Caveat: MUEBA's validation scores are in-sample for its classifier.
 2. Calibration: share of malicious sessions per FLAITD risk level (VL/L/M/H/VH) on validation and test.
+- Budget sweep (2026-09-29, post-hoc, descriptive): `tools/budget_sweep.py`. For B = 1, 2, 3, 5, 10, 15,
+  20, 30, 50 alerts/day, validation thresholds as tau_B; FLAITD, I-only, G-only, budget-matched AND, Mean,
+  MUEBA (min-score) and the MUEBA+FLAITD union (B/2 each); test insiders, precision and alerts/day, mean
+  over 5 seeds. Saved scores only, no setting changed. Table in `CHECKS.md` §11, figure
+  `results/full/extra/fig_budget_sweep.png`.

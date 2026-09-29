@@ -270,6 +270,64 @@ seed with its own breakpoints (m = 0.80, h = 0.99). Base rate: 0.65% (validation
 - The VH level holds about 4.6 test sessions per day, H about 85 per day, so at B = 10/day the alerts
   are the VH sessions plus the top of H.
 
+## 11. Budget sweep (post-hoc, descriptive)
+
+Added 2026-09-29, after the freeze; `tools/budget_sweep.py` → `budget_sweep.json`,
+`fig_budget_sweep.png`. Saved scores only; no retraining, no setting changed. For each budget B the
+threshold is set on the validation period as τ_B and applied to the test period. AND uses one common
+percentile, bisected for B alerts per day. MUEBA is thresholded on min(p_LSTM, s_iForest), so at a
+budget it is *not* its native rule (at B = 10 it gives 47.0 insiders and precision 0.169, against 47.6
+and 0.141 for the native rule). MUEBA+FLAITD = union of each at B/2. Mean over seeds 0–4; the
+largest std of the insider counts in the table is 2.7.
+
+**Test insiders found (of 61)**
+
+| Method | B=1 | B=2 | B=3 | B=5 | B=10 | B=15 | B=20 | B=30 | B=50 |
+|---|---|---|---|---|---|---|---|---|---|
+| FLAITD | 25.6 | 25.6 | 32.2 | 39.8 | 46.0 | 47.4 | 49.4 | 53.0 | 59.8 |
+| I-only | 25.0 | 30.0 | 32.8 | 38.0 | 47.6 | 49.0 | 49.0 | 52.6 | 60.0 |
+| G-only | 7.0 | 13.6 | 17.4 | 23.0 | 32.0 | 37.4 | 41.6 | 48.8 | 54.6 |
+| AND | 16.2 | 25.2 | 32.4 | 39.0 | 46.2 | 48.2 | 51.2 | 56.2 | 59.8 |
+| Mean | 16.4 | 28.0 | 33.8 | 40.6 | 46.0 | 48.2 | 48.4 | 55.6 | 60.0 |
+| MUEBA (min-score) | 23.6 | 32.4 | 39.2 | 44.8 | 47.0 | 48.0 | 48.6 | 50.4 | 53.2 |
+| MUEBA+FLAITD (B/2 each) | 32.4 | 37.6 | 39.4 | 45.8 | 56.6 | 58.0 | 58.6 | 59.0 | 60.0 |
+
+**Precision (test sessions)**
+
+| Method | B=1 | B=2 | B=3 | B=5 | B=10 | B=15 | B=20 | B=30 | B=50 |
+|---|---|---|---|---|---|---|---|---|---|
+| FLAITD | 0.110 | 0.110 | 0.083 | 0.063 | 0.045 | 0.036 | 0.031 | 0.025 | 0.023 |
+| I-only | 0.327 | 0.146 | 0.047 | 0.025 | 0.023 | 0.022 | 0.023 | 0.021 | 0.019 |
+| G-only | 0.043 | 0.046 | 0.046 | 0.040 | 0.027 | 0.021 | 0.020 | 0.019 | 0.018 |
+| AND | 0.154 | 0.118 | 0.082 | 0.064 | 0.048 | 0.039 | 0.034 | 0.029 | 0.024 |
+| Mean | 0.169 | 0.121 | 0.086 | 0.062 | 0.046 | 0.038 | 0.032 | 0.028 | 0.024 |
+| MUEBA (min-score) | 0.362 | 0.290 | 0.240 | 0.209 | 0.169 | 0.137 | 0.111 | 0.074 | 0.043 |
+| MUEBA+FLAITD (B/2 each) | 0.121 | 0.144 | 0.161 | 0.150 | 0.116 | 0.098 | 0.087 | 0.070 | 0.046 |
+
+**Actual test alerts per day** (the intended value is B)
+
+| Method | B=1 | B=2 | B=3 | B=5 | B=10 | B=15 | B=20 | B=30 | B=50 |
+|---|---|---|---|---|---|---|---|---|---|
+| FLAITD | 1.5 | 1.5 | 2.6 | 4.5 | 9.1 | 13.9 | 18.8 | 30.9 | 51.9 |
+| I-only | 0.5 | 1.5 | 4.9 | 10.0 | 20.4 | 27.4 | 33.0 | 44.5 | 68.8 |
+| G-only | 0.6 | 1.3 | 2.1 | 3.6 | 7.8 | 12.6 | 17.5 | 27.6 | 47.5 |
+| AND | 0.6 | 1.4 | 2.6 | 4.5 | 9.1 | 14.0 | 19.1 | 29.5 | 49.1 |
+| Mean | 0.5 | 1.5 | 2.6 | 4.6 | 9.1 | 13.9 | 18.9 | 29.6 | 50.6 |
+| MUEBA (min-score) | 0.4 | 1.2 | 2.1 | 3.7 | 7.1 | 10.9 | 14.6 | 23.7 | 44.2 |
+| MUEBA+FLAITD (B/2 each) | 1.6 | 1.8 | 2.1 | 3.5 | 7.8 | 11.7 | 15.5 | 23.8 | 41.4 |
+
+- FLAITD is identical at B = 1 and 2 because its risk saturates at 0.918, the value when both views are
+  fully High. In seed 0, 64 validation sessions (2.1 per day) share that value, so both budgets give
+  the same threshold. The fuzzy output cannot rank sessions inside this plateau.
+- FLAITD, AND and Mean are within about 2 insiders and 0.01 precision of each other from B = 3 upward,
+  so the graded-AND behaviour holds across budgets, not only at B = 10. At B = 1–2, Mean and AND are
+  more precise than FLAITD (0.169 and 0.154 against 0.110 at B = 1).
+- I-only's overshoot starts at B = 3 (4.9 alerts per day for an intended 3) and grows to about 2×. At
+  B = 1–2, where it stays within budget, it is the most precise label-free method (0.327 at B = 1).
+- The union finds the most insiders at every budget. MUEBA alone has the highest precision up to
+  B = 20, and it finds fewer insiders than the label-free methods from B = 20 upward (53.2 against
+  about 60 at B = 50).
+
 ---
 
 ## What this means for the evaluation framing (facts only)
