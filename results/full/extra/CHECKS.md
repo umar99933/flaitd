@@ -328,6 +328,113 @@ largest std of the insider counts in the table is 2.7.
   B = 20, and it finds fewer insiders than the label-free methods from B = 20 upward (53.2 against
   about 60 at B = 50).
 
+## 12. Budget sweep: bootstrap CIs, user-level precision and the FLAITD ceiling (post-hoc, descriptive)
+
+Added 2026-09-29, after the freeze; `tools/budget_ci.py` → `budget_ci.json`. Saved scores only, same
+alert rules as §11. **Bootstrap:** the 61 test insiders are resampled with replacement (1,000
+resamples, NumPy seed 0) and benign sessions are kept fixed. A resampled insider brings its detection
+indicator and its alerted malicious sessions (owner-credited). In each replicate the metric is computed
+per seed with the same resample and averaged over seeds 0–4; differences are paired within replicates.
+
+**Insiders found and precision with 95% CIs**
+
+| B | Method | Insiders [95% CI] | Precision [95% CI] |
+|---|---|---|---|
+| 1 | FLAITD | 25.6 [18.6, 32.8] | 0.110 [0.076, 0.143] |
+| 1 | I-only | 25.0 [18.0, 33.0] | 0.327 [0.246, 0.395] |
+| 1 | G-only | 7.0 [3.4, 11.6] | 0.043 [0.020, 0.070] |
+| 1 | AND | 16.2 [10.0, 22.4] | 0.154 [0.098, 0.208] |
+| 1 | Mean | 16.4 [10.0, 22.6] | 0.169 [0.108, 0.227] |
+| 1 | MUEBA (min-score) | 23.6 [16.8, 30.8] | 0.362 [0.273, 0.439] |
+| 1 | MUEBA+FLAITD | 32.4 [25.0, 39.2] | 0.121 [0.092, 0.149] |
+| 3 | FLAITD | 32.2 [25.2, 39.0] | 0.083 [0.062, 0.105] |
+| 3 | I-only | 32.8 [24.8, 40.8] | 0.047 [0.034, 0.059] |
+| 3 | G-only | 17.4 [11.2, 23.8] | 0.046 [0.028, 0.064] |
+| 3 | AND | 32.4 [25.2, 39.4] | 0.082 [0.061, 0.103] |
+| 3 | Mean | 33.8 [26.4, 40.6] | 0.086 [0.063, 0.107] |
+| 3 | MUEBA (min-score) | 39.2 [32.6, 45.6] | 0.240 [0.171, 0.308] |
+| 3 | MUEBA+FLAITD | 39.4 [32.2, 45.8] | 0.161 [0.123, 0.195] |
+| 10 | FLAITD | 46.0 [39.6, 52.2] | 0.045 [0.034, 0.056] |
+| 10 | I-only | 47.6 [40.6, 53.6] | 0.023 [0.018, 0.028] |
+| 10 | G-only | 32.0 [25.2, 39.2] | 0.027 [0.020, 0.035] |
+| 10 | AND | 46.2 [39.6, 52.2] | 0.048 [0.036, 0.061] |
+| 10 | Mean | 46.0 [39.4, 52.2] | 0.046 [0.035, 0.058] |
+| 10 | MUEBA (min-score) | 47.0 [41.0, 52.4] | 0.169 [0.123, 0.211] |
+| 10 | MUEBA+FLAITD | 56.6 [52.8, 59.6] | 0.116 [0.087, 0.148] |
+| 30 | FLAITD | 53.0 [47.8, 57.4] | 0.025 [0.018, 0.032] |
+| 30 | I-only | 52.6 [47.0, 57.4] | 0.021 [0.015, 0.027] |
+| 30 | G-only | 48.8 [43.0, 53.8] | 0.019 [0.014, 0.024] |
+| 30 | AND | 56.2 [52.4, 59.4] | 0.029 [0.021, 0.037] |
+| 30 | Mean | 55.6 [51.6, 59.0] | 0.028 [0.020, 0.036] |
+| 30 | MUEBA (min-score) | 50.4 [44.6, 55.6] | 0.074 [0.053, 0.093] |
+| 30 | MUEBA+FLAITD | 59.0 [56.2, 61.0] | 0.070 [0.052, 0.088] |
+
+**Paired differences** ("excl. 0" = the 95% CI does not contain zero)
+
+| B | Pair | Δ insiders [95% CI] | excl. 0 | Δ precision [95% CI] | excl. 0 |
+|---|---|---|---|---|---|
+| 1 | FLAITD − AND | +9.4 [+5.2, +13.8] | yes | −0.044 [−0.074, −0.012] | yes |
+| 1 | FLAITD − Mean | +9.2 [+5.4, +13.6] | yes | −0.060 [−0.092, −0.021] | yes |
+| 1 | FLAITD − I-only | +0.6 [−7.0, +8.0] | no | −0.217 [−0.277, −0.146] | yes |
+| 3 | FLAITD − AND | −0.2 [−1.2, +0.6] | no | +0.001 [−0.001, +0.002] | no |
+| 3 | FLAITD − Mean | −1.6 [−3.6, +0.0] | no | −0.002 [−0.007, +0.002] | no |
+| 3 | FLAITD − I-only | −0.6 [−7.0, +5.6] | no | +0.036 [+0.021, +0.052] | yes |
+| 10 | FLAITD − AND | −0.2 [−2.8, +2.0] | no | −0.003 [−0.008, +0.000] | no |
+| 10 | FLAITD − Mean | +0.0 [−1.2, +1.0] | no | −0.001 [−0.003, −0.000] | yes |
+| 10 | FLAITD − I-only | −1.6 [−5.6, +2.2] | no | +0.022 [+0.016, +0.029] | yes |
+| 30 | FLAITD − AND | −3.2 [−7.4, +0.8] | no | −0.004 [−0.007, −0.002] | yes |
+| 30 | FLAITD − Mean | −2.6 [−6.0, +0.4] | no | −0.003 [−0.005, −0.001] | yes |
+| 30 | FLAITD − I-only | +0.4 [−1.2, +1.8] | no | +0.004 [−0.000, +0.008] | no |
+
+- At B = 1 the comparison is not budget-matched: because of the ceiling ties (below), FLAITD raises
+  1.5 test alerts per day against 0.5–0.6 for AND and Mean (§11). Its extra insiders at B = 1 come
+  from raising about three times as many alerts.
+- At B = 3 and 10, FLAITD cannot be distinguished from AND on either metric, nor from Mean on insiders
+  found. The precision differences to Mean that exclude zero at B = 10 and 30 are 0.001–0.003.
+- Against I-only, FLAITD is more precise at B = 3 and 10 (I-only overshoots its budget there) and less
+  precise at B = 1. No insider-count difference to I-only excludes zero.
+- At B = 10, the CI of FLAITD − AND for insiders is [−2.8, +2.0]. It does not fall inside ±2.
+
+**User-level precision** = insiders detected / (insiders detected + benign users alerted); a benign user
+is a non-insider account with at least one alert on a benign session (definitions of Table IV).
+
+| Method | B=1 | B=2 | B=3 | B=5 | B=10 | B=15 | B=20 | B=30 | B=50 |
+|---|---|---|---|---|---|---|---|---|---|
+| FLAITD | 0.218 | 0.218 | 0.209 | 0.197 | 0.155 | 0.137 | 0.127 | 0.094 | 0.086 |
+| I-only | 0.510 | 0.159 | 0.112 | 0.101 | 0.085 | 0.072 | 0.066 | 0.065 | 0.067 |
+| G-only | 0.100 | 0.134 | 0.144 | 0.161 | 0.168 | 0.160 | 0.149 | 0.137 | 0.131 |
+| AND | 0.236 | 0.223 | 0.211 | 0.197 | 0.161 | 0.143 | 0.138 | 0.132 | 0.115 |
+| Mean | 0.273 | 0.225 | 0.214 | 0.198 | 0.156 | 0.142 | 0.128 | 0.122 | 0.100 |
+| MUEBA (min-score) | 0.458 | 0.379 | 0.358 | 0.339 | 0.312 | 0.289 | 0.270 | 0.234 | 0.196 |
+| MUEBA+FLAITD | 0.248 | 0.266 | 0.260 | 0.240 | 0.219 | 0.189 | 0.172 | 0.154 | 0.123 |
+
+Benign users alerted (mean over seeds):
+
+| Method | B=1 | B=2 | B=3 | B=5 | B=10 | B=15 | B=20 | B=30 | B=50 |
+|---|---|---|---|---|---|---|---|---|---|
+| FLAITD | 92.0 | 92.0 | 122.0 | 162.2 | 251.4 | 297.4 | 339.6 | 512.2 | 632.6 |
+| I-only | 24.0 | 158.8 | 260.0 | 339.2 | 511.0 | 628.2 | 691.6 | 759.4 | 831.6 |
+| G-only | 61.8 | 87.6 | 103.0 | 119.6 | 158.4 | 197.0 | 238.6 | 306.4 | 363.6 |
+| AND | 52.0 | 87.8 | 121.0 | 158.8 | 241.6 | 289.4 | 319.4 | 370.4 | 459.0 |
+| Mean | 43.6 | 96.6 | 124.4 | 164.2 | 249.6 | 292.4 | 329.2 | 399.6 | 541.0 |
+| MUEBA (min-score) | 29.6 | 55.8 | 72.8 | 89.2 | 105.4 | 119.6 | 132.6 | 168.0 | 220.6 |
+| MUEBA+FLAITD | 98.6 | 103.6 | 112.4 | 145.4 | 202.4 | 249.0 | 282.2 | 325.2 | 429.2 |
+
+**The FLAITD ceiling.** The maximum risk is 0.9183 in every seed: the centroid when only the VH rule
+fires, at full strength (both percentiles ≥ h = 0.99).
+
+| Seed | Validation sessions at max (share) | Malicious among them | Test sessions at max (share) | Malicious among them |
+|---|---|---|---|---|
+| 0 | 64 (0.27%) | 12 | 415 (0.20%) | 46 |
+| 1 | 61 (0.25%) | 17 | 457 (0.22%) | 53 |
+| 2 | 62 (0.26%) | 15 | 425 (0.20%) | 49 |
+| 3 | 62 (0.26%) | 14 | 442 (0.21%) | 49 |
+| 4 | 60 (0.25%) | 14 | 459 (0.22%) | 44 |
+
+About 62 validation sessions (2.1 per day) and 440 test sessions (1.5 per day) share the maximum,
+with 14.4 and 48.2 malicious among them on average. Any budget below about 2 per day therefore
+alerts the whole plateau, and the fuzzy output cannot order sessions within it.
+
 ---
 
 ## What this means for the evaluation framing (facts only)

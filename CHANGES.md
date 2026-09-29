@@ -131,3 +131,13 @@ tables in `CHECKS.md` §9–10.
   MUEBA (min-score) and the MUEBA+FLAITD union (B/2 each); test insiders, precision and alerts/day, mean
   over 5 seeds. Saved scores only, no setting changed. Table in `CHECKS.md` §11, figure
   `results/full/extra/fig_budget_sweep.png`.
+- Budget sweep follow-up (2026-09-29, post-hoc, descriptive): `tools/budget_ci.py`. Bootstrap CIs over
+  the 61 test insiders (1,000 resamples, benign sessions fixed, pooled over seeds) for insiders found and
+  session precision at B = 1, 3, 10, 30; paired differences FLAITD vs AND, Mean, I-only; user-level
+  precision at every sweep budget; the FLAITD score ceiling. Saved scores only, no setting changed; no
+  tie-break implemented or evaluated on r4.2. Tables in `CHECKS.md` §12.
+
+## Preregistration of the r5.2 confirmation run (2026-09-29)
+
+`PREREGISTRATION.md` fixes data, split, seeds, budgets, methods, metrics, bootstrap, hypotheses H1–H3
+with decision rules and the secondary FLAITD-tb variant, before any r5.2 file is downloaded or read.
