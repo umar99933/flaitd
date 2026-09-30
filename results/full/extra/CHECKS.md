@@ -393,7 +393,10 @@ per seed with the same resample and averaged over seeds 0–4; differences are p
   found. The precision differences to Mean that exclude zero at B = 10 and 30 are 0.001–0.003.
 - Against I-only, FLAITD is more precise at B = 3 and 10 (I-only overshoots its budget there) and less
   precise at B = 1. No insider-count difference to I-only excludes zero.
-- At B = 10, the CI of FLAITD − AND for insiders is [−2.8, +2.0]. It does not fall inside ±2.
+- At B = 10, the CI of FLAITD − AND for insiders is [−2.8, +2.0]. It does not fall inside ±2. The 90%
+  CI from the same replicates is [−2.2, +1.6] (B = 1: [+6.0, +13.0]; B = 3: [−1.0, +0.4]; B = 30:
+  [−6.6, +0.2]). This was added 2026-09-30 for PREREGISTRATION.md Amendment 1; the 95% intervals are
+  unchanged.
 
 **User-level precision** = insiders detected / (insiders detected + benign users alerted); a benign user
 is a non-insider account with at least one alert on a benign session (definitions of Table IV).

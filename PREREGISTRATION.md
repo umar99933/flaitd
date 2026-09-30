@@ -4,6 +4,10 @@
 answer key (`data/answers/r5.2-*`, the r5.2 rows of `insiders.csv`) has not been opened.
 **Code state:** the git commit that adds this file. Its hash and time are the registration record.
 **Authors:** Umer Farooq, Ch Anwar Ul Hassan.
+**Amendment 1:** 2026-09-30 16:47 UTC, still before any r5.2 file was downloaded or read. It changes
+H1 (margin and test) and H3 (budgets), adds the Jaccard overlap as a descriptive measure, and adds an
+owner-crediting check to step 1. Amended passages are marked *[A1]*. The version before the amendment
+is the registration commit `ef62de7`.
 
 ## 1. Purpose
 
@@ -35,7 +39,7 @@ run changes the r4.2 results.
      `dataset_version: "5.2"`, `cache_dir: cache/r52` and `results_dir: results/r52`;
   2. the FLAITD-tb scoring function (§6) with a unit test on synthetic arrays;
   3. a generalisation of `tools/budget_sweep.py` / `tools/budget_ci.py` to any number of test
-     insiders and to FLAITD-tb.
+     insiders and to FLAITD-tb, plus *[A1]* the 90% CIs for H1 and the Jaccard overlap (§6).
 
   All three are committed before `run.py prepare` is run on r5.2. They are not evaluated on r4.2.
 - **Data problems:** `run.py check` and the data audit may lead only to fixes of paths, file formats or
@@ -75,6 +79,9 @@ The single methods for H2 and H3 are FLAITD, I-only, G-only, AND, Mean and MUEBA
 - **Also reported, not tested:** user-level precision (insiders found / (insiders found + benign users
   alerted)), recall, F1, test alerts per day, PR-AUC and ROC-AUC where defined, and results per
   scenario.
+- *[A1]* **Alert overlap, descriptive:** the Jaccard index of the sets of alerted test sessions,
+  |A ∩ B| / |A ∪ B|, for FLAITD vs AND and FLAITD vs Mean. It is computed per seed at every budget
+  B ∈ {1, 3, 10, 30} and reported as the mean over seeds, with its range.
 - **Pooling:** each metric is the mean over the five seeds.
 - **Bootstrap:**
   - Resample the test insiders with replacement, 1,000 resamples, NumPy `default_rng(0)`, keeping
@@ -88,13 +95,18 @@ The single methods for H2 and H3 are FLAITD, I-only, G-only, AND, Mean and MUEBA
 
 ## 7. Primary hypotheses and decision rules (B = 10 unless stated)
 
-**H1 (graded AND).** FLAITD and AND find the same number of test insiders within 2.
-Let D1 = insiders(FLAITD) − insiders(AND), with 95% CI [L, U].
-- *Supported* if −2 ≤ L and U ≤ 2.
-- *Rejected* if U < −2 or L > 2.
+**H1 (graded AND), *[A1]* equivalence test.** FLAITD and AND find the same number of test insiders
+within a margin δ.
+- **Margin.** δ = 5% of N, where N is the number of r5.2 test insiders (insiders with at least one
+  malicious test session). It is rounded to the nearest integer, with halves rounded up, and is at
+  least 2: δ = max(2, ⌊0.05·N + 0.5⌋). N is counted in step 2, before any model is scored; δ is
+  written into `CHANGES.md` at that point.
+- **Statistic.** D1 = insiders(FLAITD) − insiders(AND), with paired bootstrap CIs (§6).
+- *Supported* if the **90%** CI (two one-sided tests at α = 0.05) lies within [−δ, +δ].
+- *Rejected* if the **95%** CI lies entirely outside [−δ, +δ], that is, above +δ or below −δ.
 - *Inconclusive* otherwise.
 
-The point estimate of D1 and the session-precision difference are also reported.
+The point estimate of D1, both intervals and the session-precision difference are also reported.
 
 **H2 (complementarity).** The MUEBA+FLAITD union finds more test insiders than each of the six single
 methods. For each single method k, let D2_k = insiders(union) − insiders(k), with CI [L_k, U_k].
@@ -102,12 +114,16 @@ methods. For each single method k, let D2_k = insiders(union) − insiders(k), w
 - *Rejected* if U_k < 0 for at least one k.
 - *Inconclusive* otherwise.
 
-**H3 (supervised precision).** MUEBA has the highest session precision at every B ∈ {1, 3, 10}, against
+**H3 (supervised precision).** *[A1]* MUEBA has the highest session precision at B ∈ {3, 10}, against
 the five other single methods and the union. For each B and each other method k, let
-D3_{B,k} = precision(MUEBA) − precision(k), with CI [L, U].
-- *Supported* if L > 0 for all 18 comparisons.
+D3_{B,k} = precision(MUEBA) − precision(k), with 95% CI [L, U].
+- *Supported* if L > 0 for all **12** comparisons.
 - *Rejected* if U < 0 for at least one.
 - *Inconclusive* otherwise.
+
+B = 1 is reported descriptively only, with the same differences and CIs. At B = 1 several methods
+cannot meet the budget because of ties (on r4.2, FLAITD raised 1.5 alerts per day), so the
+comparison is not budget-matched.
 
 ## 8. Secondary, pre-specified variant: FLAITD-tb
 
@@ -131,8 +147,17 @@ as a secondary result and does not count towards H1–H3. FLAITD-tb does not rep
 
 ## 9. Order of work and stop points
 
-1. Download `r5.2.tar.bz2`, verify the SHA-256, extract, run `run.py check`. **Stop:** report to
-   the authors.
+1. Download `r5.2.tar.bz2`, verify the SHA-256, extract, run `run.py check`. *[A1]* Also check that
+   owner crediting covers every r5.2 scenario, including scenario 4. Look at the answer-key **file
+   structure only**:
+   - the folder and file layout;
+   - which log types (logon, device, file, email, http) occur in each scenario's files;
+   - that every file's name carries the owning insider's user field, as the ingest code requires;
+   - whether any scenario's events can occur under an account other than the file's owner.
+
+   Report per scenario: file count, log types present, and whether events under another account
+   occur (yes/no). Do not print or record user IDs, dates or event contents. If crediting would fail
+   for a scenario, stop; any fix is a deviation (§10). **Stop:** report to the authors.
 2. Commit the permitted additions (§3), then run `run.py --config config/r52.yaml prepare`. The audit
    uses labels only to verify event matching and session labelling. **Stop:** report the data
    summary and any warnings; no setting changes.
@@ -154,5 +179,9 @@ hypothesis is reported as not confirmatory.
   keyword lists written for r4.2 may fit it worse; that is part of what the run tests.
 - MUEBA's classifier is trained on days 1–210, so its validation thresholds are set in-sample, as on
   r4.2.
-- The ±2-insider margin of H1 was chosen before this run. On r4.2 the corresponding CI was
-  [−2.8, +2.0] (CHECKS.md §12), which H1's rule would have classed as inconclusive.
+- *[A1]* The H1 margin and test were changed in Amendment 1 after the r4.2 results had been seen, and
+  the r4.2 CI informed the choice. Under the original rule (±2, 95% CI), r4.2 gives [−2.8, +2.0]:
+  inconclusive. Under the amended rule, r4.2 gives δ = 3 of 61 test insiders (5% of 61 = 3.05) and a
+  90% CI for FLAITD − AND at B = 10 of [−2.2, +1.6], which lies within [−3, +3]: supported (point
+  estimate −0.2; `tools/budget_ci.py`, same 1,000 replicates as CHECKS.md §12). r4.2 is not a test of
+  H1; it only shows what the rule gives on the data that motivated it. No r5.2 information was used.

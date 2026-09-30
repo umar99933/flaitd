@@ -141,3 +141,9 @@ tables in `CHECKS.md` §9–10.
 
 `PREREGISTRATION.md` fixes data, split, seeds, budgets, methods, metrics, bootstrap, hypotheses H1–H3
 with decision rules and the secondary FLAITD-tb variant, before any r5.2 file is downloaded or read.
+- Amendment 1 to `PREREGISTRATION.md` (2026-09-30 16:47 UTC, before any r5.2 download): H1 becomes an
+  equivalence test (margin 5% of r5.2 test insiders, minimum 2; supported by a 90% CI within the margin,
+  rejected by a 95% CI outside it); H3 is tested at B = 3 and 10 only; Jaccard overlap of alerted
+  sessions is added as a descriptive measure; step 1 gains an answer-key structure check of owner
+  crediting. `tools/budget_ci.py` now also saves 90% CIs of the paired differences; on r4.2, FLAITD − AND
+  at B = 10 has 90% CI [−2.2, +1.6] (CHECKS.md §12).

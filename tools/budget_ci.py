@@ -109,6 +109,7 @@ def main():
             lf, lp = ci(dfnd), ci(dp)
             out["diff"][str(b)][f"{a_} - {b_}"] = {
                 "insiders": float(pf), "insiders_ci": lf, "insiders_excludes_0": bool(lf[0] > 0 or lf[1] < 0),
+                "insiders_ci90": [float(np.percentile(dfnd, 5)), float(np.percentile(dfnd, 95))],
                 "precision": float(pp), "precision_ci": lp, "precision_excludes_0": bool(lp[0] > 0 or lp[1] < 0)}
     for b in BUDGETS:
         out["user_level"][str(b)] = {m: {k: float(np.mean([p[k] for p in point[b][m]]))
